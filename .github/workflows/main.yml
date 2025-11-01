@@ -1,0 +1,62 @@
+# Nome da nossa "Esteira"
+name: 🍔 Pipeline do Cardápio
+
+# Quando ela deve rodar?
+# "on: push" significa: "toda vez que alguém enviar uma mudança (commit)"
+on:
+  push:
+    branches:
+      - main  # Apenas na branch principal
+
+# Permissões que a esteira precisa para publicar o site
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Os "estágios" (Jobs) da nossa pipeline
+jobs:
+  # ----------------------------------------------------
+  # ESTÁGIO 1: CI (Inspeção de Qualidade)
+  # ----------------------------------------------------
+  build:
+    name: 🕵️ Inspecionar (CI)
+    runs-on: ubuntu-latest # A "mesa de trabalho" é um computador Linux
+
+    steps:
+    # 1. Pega o código do repositório (o "cardápio")
+    - name: 1. Pegar o código
+      uses: actions/checkout@v4
+
+    # 2. SIMULAÇÃO: Um teste simples (poderia ser "verificar ortografia")
+    - name: 2. Rodar "testes" (Simulação)
+      run: |
+        echo "Iniciando inspeção do cardápio..."
+        sleep 5 # Simula um teste demorando 5s
+        echo "Inspeção de qualidade aprovada!"
+
+    # 3. Prepara o "pacote" (artefato) para o próximo estágio
+    - name: 3. Preparar pacote para entrega
+      uses: actions/upload-pages-artifact@v3
+      with:
+        # Envia tudo da pasta principal
+        path: '.'
+
+  # ----------------------------------------------------
+  # ESTÁGIO 2: CD (Entrega Expressa)
+  # ----------------------------------------------------
+  deploy:
+    name: 🚀 Entregar (CD)
+    needs: build # ❗️ SÓ RODA DEPOIS QUE O "build" PASSAR
+
+    # Configurações para publicar no GitHub Pages
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Publica o "pacote" (que o 'build' preparou) no site
+    - name: 1. Publicar o novo cardápio no site
+      id: deployment
+      uses: actions/deploy-pages@v4
